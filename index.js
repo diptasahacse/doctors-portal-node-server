@@ -56,7 +56,37 @@ const run = async () => {
             }
 
         })
-       
+        // Get Available services
+        app.get('/available', async (req, res) => {
+            const date = req.query.date || 'May 19, 2022';
+            // get all services
+            const services = await servicesCollection.find().toArray();
+
+            // get the booking of that day
+            const query = { date };
+            const bookings = await bookingCollection.find(query).toArray();
+            
+            // Step: 3 -- for each service
+            services.forEach(service => {
+                // Step 4 : find booking for that service
+                const serviceBookings = bookings.filter(b => b.treatmentName === service.name)
+                // Step 5: select slot for the service booking : ['','','','']
+                const bookedSlots = serviceBookings.map(book => book.slot)
+
+
+                // Step : 5 -- select those slots that are not in bookedSlots
+                const available = service.slots.filter(singleSlot => !bookedSlots.includes(singleSlot))
+
+                // Step -6 -- replace slots as a obj property in each service
+                service.slots = available
+            })
+
+
+            res.send(services)
+
+
+        })
+
 
     }
     finally {
