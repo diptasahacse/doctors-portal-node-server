@@ -21,6 +21,40 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 //     // perform actions on the collection object
 //     client.close();
 // });
+const verifyJWT = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+
+    // Token ঠিক নাই বা আন্ডিফাইন্ড হলে
+    if (!authHeader) {
+        return res.status(401).send({
+            message: 'Unauthorized access'
+        })
+
+    }
+    // টোকেন আছে কিন্তু ঠিক টোকেন কিনা
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+
+        // যদি এরর হয় তাহলে বুজতে হবে টোকেন আছে কিন্তু পারমিশন বা এক্সেস নাই
+        if (err) {
+            return res.status(403).send({
+                message: 'Forbidden access'
+            })
+
+        }
+        // যদি এরর না হয় তাহলে বুজতে হবে টোকেন আছে তাই req.decoded এর মান decoded এর ভ্যালু বসিয়ে দিতে হবে
+        req.decoded = decoded;
+
+        // সব শেষে এই middleware টি যেখানে ইউজ হয়েছে সেখানে ফেরত যাওয়ার জন্য next function কে কল করে দিতে হবে।
+        next();
+
+
+
+
+    });
+}
+
+
 const run = async () => {
     try {
         await client.connect();
@@ -54,11 +88,25 @@ const run = async () => {
 
         })
         // GET Booking
-        app.get('/treatmentbooking', async (req, res) => {
+        app.get('/treatmentbooking', verifyJWT, async (req, res) => {
+            // const token = req.headers.authorization.split(' ')[1];
+            // console.log(req.headers.authorization)
+
             const patientEmail = req.query.patientEmail;
-            const query = { patientEmail }
-            const bookedInfoArray = await bookingCollection.find(query).toArray();
-            res.send(bookedInfoArray)
+
+            // যদি কারো কাছে অন্য কারো ভ্যালিড টোকেন থাকে তাহলে যা যাতে অন্যের ইনফো দেখতে না পারে তার জন্য decode email আর patient email একই কিনা সেটা চেক করতে হবে। যদি ঠিক থাকে তাহলে তাকে ডাটা দিবো না হবে ফরবিডেন করে দিবো
+            const decodeEmail = req.decoded.email;
+            if (patientEmail === decodeEmail) {
+                const query = { patientEmail }
+                const bookedInfoArray = await bookingCollection.find(query).toArray();
+                return res.send(bookedInfoArray)
+            }
+            else {
+                return res.status(403).send({
+                    message: 'Forbidden access'
+                })
+
+            }
 
 
         })
