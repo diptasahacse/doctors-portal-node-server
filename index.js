@@ -25,6 +25,7 @@ const run = async () => {
         await client.connect();
         const servicesCollection = client.db('doctors_portal').collection('services');
         const bookingCollection = client.db('doctors_portal').collection('booking');
+        const usersCollection = client.db('doctors_portal').collection('users');
 
         // Get All Treatment Service
         app.get('/services', async (req, res) => {
@@ -32,6 +33,30 @@ const run = async () => {
             const cursor = servicesCollection.find(query);
             const servicesArray = await cursor.toArray()
             res.send(servicesArray)
+
+
+        })
+        // PUT - USER
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+
+            const user = req.body;
+            const filter = { email };
+            const options = { upsert: true };
+
+            const userDoc = {
+                $set: user,
+            };
+            const result = await usersCollection.updateOne(filter, userDoc, options);
+            res.send(result)
+
+        })
+        // GET Booking
+        app.get('/treatmentbooking', async (req, res) => {
+            const patientEmail = req.query.patientEmail;
+            const query = { patientEmail }
+            const bookedInfoArray = await bookingCollection.find(query).toArray();
+            res.send(bookedInfoArray)
 
 
         })
@@ -58,14 +83,14 @@ const run = async () => {
         })
         // Get Available services
         app.get('/available', async (req, res) => {
-            const date = req.query.date || 'May 19, 2022';
+            const date = req.query.date;
             // get all services
             const services = await servicesCollection.find().toArray();
 
             // get the booking of that day
             const query = { date };
             const bookings = await bookingCollection.find(query).toArray();
-            
+
             // Step: 3 -- for each service
             services.forEach(service => {
                 // Step 4 : find booking for that service
@@ -81,6 +106,7 @@ const run = async () => {
                 service.slots = available
             })
 
+            // console.log(req.query)
 
             res.send(services)
 
