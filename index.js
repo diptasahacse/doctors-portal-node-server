@@ -1,4 +1,5 @@
-const express = require('express')
+const express = require('express');
+const jwt = require('jsonwebtoken')
 const cors = require('cors');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const app = express();
@@ -48,7 +49,8 @@ const run = async () => {
                 $set: user,
             };
             const result = await usersCollection.updateOne(filter, userDoc, options);
-            res.send(result)
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            res.send({ result, token })
 
         })
         // GET Booking
