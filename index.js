@@ -61,11 +61,21 @@ const run = async () => {
         const servicesCollection = client.db('doctors_portal').collection('services');
         const bookingCollection = client.db('doctors_portal').collection('booking');
         const usersCollection = client.db('doctors_portal').collection('users');
+        const doctorsCollection = client.db('doctors_portal').collection('doctors');
 
         // Get All Treatment Service
         app.get('/services', async (req, res) => {
             const query = {};
             const cursor = servicesCollection.find(query);
+            const servicesArray = await cursor.toArray()
+            res.send(servicesArray)
+
+
+        })
+        // Get All Treatment Service name
+        app.get('/servicesname', async (req, res) => {
+            const query = {};
+            const cursor = servicesCollection.find(query).project({ name: 1 });
             const servicesArray = await cursor.toArray()
             res.send(servicesArray)
 
@@ -167,6 +177,14 @@ const run = async () => {
                 return res.send({ success: true, result })
 
             }
+
+        })
+        // Doctor
+        app.post('/addDoctors', async (req, res) => {
+            const doctorInfo = req.body;
+            const result = doctorsCollection.insertOne(doctorInfo)
+            res.send(result)
+
 
         })
         // Get Available services
