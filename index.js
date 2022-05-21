@@ -21,6 +21,21 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 //     // perform actions on the collection object
 //     client.close();
 // });
+const verifyAdmin = (req, res, next) => {
+    const requesterEmail = req.decoded.email;
+    const requesterInfo = await usersCollection.findOne({ email: requesterEmail })
+    if (requesterInfo.role === 'admin') {
+        next();
+    }
+    else {
+        return res.status(403).send({
+            message: 'Forbidden access'
+        })
+
+    }
+
+
+}
 const verifyJWT = (req, res, next) => {
     const authHeader = req.headers.authorization;
 
@@ -96,26 +111,16 @@ const run = async () => {
 
         })
         // make to create an admin
-        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+        app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email;
-            const requesterEmail = req.decoded.email;
-            const requesterInfo = await usersCollection.findOne({ email: requesterEmail })
-            if (requesterInfo.role === 'admin') {
-                const filter = { email };
-                const userDoc = {
-                    $set: { role: 'admin' },
-                };
-                const result = await usersCollection.updateOne(filter, userDoc);
 
-                return res.send(result)
+            const filter = { email };
+            const userDoc = {
+                $set: { role: 'admin' },
+            };
+            const result = await usersCollection.updateOne(filter, userDoc);
 
-            }
-            else {
-                return res.status(403).send({
-                    message: 'Forbidden access'
-                })
-
-            }
+            return res.send(result)
 
 
         })
@@ -180,9 +185,9 @@ const run = async () => {
 
         })
         // Doctor
-        app.post('/addDoctors', async (req, res) => {
+        app.post('/addDoctors', verifyJWT, verifyAdmin, async (req, res) => {
             const doctorInfo = req.body;
-            const result = doctorsCollection.insertOne(doctorInfo)
+            const result = await doctorsCollection.insertOne(doctorInfo)
             res.send(result)
 
 
