@@ -38,7 +38,7 @@ const verifyJWT = (req, res, next) => {
         // যদি এরর হয় তাহলে বুজতে হবে টোকেন আছে কিন্তু পারমিশন বা এক্সেস নাই
         if (err) {
             return res.status(403).send({
-                message: 'Forbidden access'
+                message: 'Forbidden access 1'
             })
 
         }
@@ -69,6 +69,12 @@ const run = async () => {
             const servicesArray = await cursor.toArray()
             res.send(servicesArray)
 
+
+        })
+        // GET -  all user
+        app.get('/user', verifyJWT, async(req, res) => {
+            const users = await usersCollection.find().toArray();
+            res.send(users)
 
         })
         // PUT - USER
@@ -103,7 +109,7 @@ const run = async () => {
             }
             else {
                 return res.status(403).send({
-                    message: 'Forbidden access'
+                    message: 'Forbidden access 2'
                 })
 
             }
