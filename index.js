@@ -236,7 +236,7 @@ const run = async () => {
 
 
         // delete an Doctor
-        app.delete('/alldoctors/:id', async (req, res) => {
+        app.delete('/alldoctors/:id', verifyJWT, verifyAdmin, async (req, res) => {
             const doctorsId = req.params.id;
             const query = { _id: ObjectId(doctorsId) };
             const result = await doctorsCollection.deleteOne(query);
