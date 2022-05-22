@@ -1,16 +1,22 @@
 const express = require('express');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 require('dotenv').config()
+const stripe = require("stripe")(process.env.STRIPE_KEY);
 const port = process.env.PORT || 5000
 
 // Middleware
 app.use(cors())
 app.use(express.json())
 
-
+const calculateOrderAmount = (items) => {
+    // Replace this constant with a calculation of the order's amount
+    // Calculate the order total on the server to prevent
+    // people from directly manipulating the amount on the client
+    // return 1400;
+};
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gubcr.mongodb.net/?retryWrites=true&w=majority`;
@@ -134,7 +140,7 @@ const run = async () => {
 
 
         })
-        // make admin
+        // remove admin
         app.put('/user/removeadmin/:email', verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email;
 
@@ -185,6 +191,15 @@ const run = async () => {
 
             }
 
+
+        })
+        // Get single booking
+        app.get('/treatmentbooking/:id', verifyJWT, async (req, res) => {
+            const bookingId = req.params.id;
+            const query = { _id: ObjectId(bookingId) };
+
+            const bookingInfo = await bookingCollection.findOne(query);
+            res.send(bookingInfo)
 
         })
         // POST Booking
@@ -255,6 +270,27 @@ const run = async () => {
             const query = { _id: ObjectId(doctorsId) };
             const result = await doctorsCollection.deleteOne(query);
             res.send(result)
+
+        })
+
+
+
+        // Payment
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+            const service = req.body;
+            const price = service.price;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: "usd",
+                payment_method_types: ["card"]
+            });
+            // console.log(paymentIntent)
+
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            })
 
         })
 
