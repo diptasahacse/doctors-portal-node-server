@@ -283,6 +283,16 @@ const run = async () => {
 
 
         })
+        // GET all Payment data for a particular user
+        app.get('/payment/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { patientEmail: email }
+            const paymentInfo = await paymentsCollection.find(query).toArray();
+            res.send(paymentInfo);
+
+
+        })
+
 
 
         // delete an Doctor
