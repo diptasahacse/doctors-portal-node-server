@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken')
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 require('dotenv').config()
 const port = process.env.PORT || 5000
@@ -63,8 +63,8 @@ const run = async () => {
         const bookingCollection = client.db('doctors_portal').collection('booking');
         const usersCollection = client.db('doctors_portal').collection('users');
         const doctorsCollection = client.db('doctors_portal').collection('doctors');
-        
-        
+
+
         const verifyAdmin = async (req, res, next) => {
             const requesterEmail = req.decoded.email;
             const requesterInfo = await usersCollection.findOne({ email: requesterEmail })
@@ -80,6 +80,14 @@ const run = async () => {
 
 
         }
+        // Get All Doctors
+        app.get('/alldoctors', verifyJWT, verifyAdmin, async (req, res) => {
+            const query = {};
+            const cursor = doctorsCollection.find(query);
+            const doctorsArray = await cursor.toArray()
+            res.send(doctorsArray)
+
+        })
         // Get All Treatment Service
         app.get('/services', async (req, res) => {
             const query = {};
@@ -223,6 +231,16 @@ const run = async () => {
 
             res.send(services)
 
+
+        })
+
+
+        // delete an Doctor
+        app.delete('/alldoctors/:id', async (req, res) => {
+            const doctorsId = req.params.id;
+            const query = { _id: ObjectId(doctorsId) };
+            const result = await doctorsCollection.deleteOne(query);
+            res.send(result)
 
         })
 
