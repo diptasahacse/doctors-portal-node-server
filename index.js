@@ -134,6 +134,20 @@ const run = async () => {
 
 
         })
+        // make admin
+        app.put('/user/removeadmin/:email', verifyJWT, verifyAdmin, async (req, res) => {
+            const email = req.params.email;
+
+            const filter = { email };
+            const userDoc = {
+                $unset: { role: '' },
+            };
+            const result = await usersCollection.updateOne(filter, userDoc);
+
+            return res.send(result)
+
+
+        })
         // PUT - USER
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
